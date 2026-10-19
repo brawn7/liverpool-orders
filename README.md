@@ -91,7 +91,7 @@ liverpool-orders/
 │       └── infrastructure/
 │           ├── adapter/
 │           │   ├── in/web/     # Controllers, DTOs, mappers
-│           │   └── out/persistence/  # Documentos y repositorios MongoDB
+│           │   └── out/persistence/  # Adaptadores, documentos, mappers y repositorios MongoDB
 │           └── config/         # Wiring de beans, OpenAPI
 ├── frontend/                   # React + Vite (en desarrollo)
 ├── docker-compose.yml          # MongoDB local
@@ -123,6 +123,7 @@ erDiagram
         object shippingAddress "Dirección de envío"
         array items "productCode, quantity, price"
         string status "Estatus del pedido"
+        decimal total "Calculado: suma de subtotales"
         datetime createdAt
         datetime updatedAt
     }
@@ -143,6 +144,29 @@ Cada pedido embebe una copia de los datos del cliente (`userId`, nombre completo
 
 - **Lectura sin joins:** la lista, el detalle y la búsqueda se resuelven con una sola consulta a `orders`.
 - **Valor histórico:** si el usuario cambia su email, los pedidos existentes conservan los datos con los que se realizó la compra, igual que un ticket.
+
+### Índices
+
+Se crean automáticamente al iniciar la aplicación (`spring.data.mongodb.auto-index-creation`).
+
+| Colección | Campo(s) | Tipo | Propósito |
+|---|---|---|---|
+| `users` | `email` | Único | Garantiza email único incluso ante peticiones concurrentes |
+| `orders` | `orderNumber` | Único | Folio irrepetible |
+| `orders` | `customer.userId` | Simple | Validar si un usuario tiene pedidos antes de eliminarlo |
+| `orders` | `status` | Simple | Filtro por estatus |
+| `orders` | `createdAt` | Simple | Orden por fecha (más recientes primero) |
+
+### Búsqueda de pedidos
+
+Un solo término busca, sin distinguir mayúsculas, en:
+
+- Folio (`orderNumber`)
+- Nombre del cliente (`customer.fullName`)
+- Email del cliente (`customer.email`)
+- Código de producto (`items.productCode`)
+
+Opcionalmente se combina con un filtro por estatus. Los resultados se paginan y ordenan por fecha de creación descendente. El término se escapa antes de construir la expresión regular, así que caracteres como `.` o `+` se buscan literalmente.
 
 ---
 
@@ -251,6 +275,11 @@ curl http://localhost:8080/actuator/health
 | **Folio legible `LV-yyMMdd-XXXXXX`** | Fácil de dictar y buscar; excluye caracteres ambiguos (0/O, 1/I). |
 | **Usuario inexistente al crear pedido → 422** | El recurso solicitado es el pedido; el usuario inválido es un error de datos de entrada, no un 404. |
 | **Configuración por variables de entorno** | El mismo artefacto corre en local y en la nube sin cambios de código. |
+| **Documentos de persistencia separados del dominio** | El esquema de MongoDB puede evolucionar sin contaminar el modelo de negocio; los mappers hacen la traducción. |
+| **Precios y total como `Decimal128`** | Spring Data guarda `BigDecimal` como texto por defecto; `Decimal128` conserva precisión y permite ordenar y agregar numéricamente. |
+| **Total persistido además de calculado** | El dominio lo calcula; se guarda para ordenar o reportar sin recalcular en cada consulta. |
+| **Búsqueda con regex sobre campos acotados** | Suficiente para el volumen del ejercicio. En producción la evolución natural es Atlas Search con índice `autocomplete`. |
+| **Estatus como `String` en el documento** | El documento no depende del enum de dominio; la conversión ocurre en el mapper. |
 
 ---
 
@@ -259,7 +288,7 @@ curl http://localhost:8080/actuator/health
 - [x] Scaffold del backend y conexión a MongoDB Atlas
 - [x] Modelo de dominio y máquina de estados del pedido
 - [x] Puertos y casos de uso
-- [ ] Adaptadores de persistencia MongoDB e índices
+- [x] Adaptadores de persistencia MongoDB e índices
 - [ ] API REST, manejo de errores y documentación OpenAPI
 - [ ] Datos de prueba (seed) y pruebas unitarias
 - [ ] Frontend: lista de pedidos con typeahead y detalle
