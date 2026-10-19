@@ -16,6 +16,7 @@ Sistema para que el equipo de ventas gestione los pedidos realizados desde la **
 - [Requisitos previos](#requisitos-previos)
 - [Configuración](#configuración)
 - [Ejecución local](#ejecución-local)
+- [API](#api)
 - [Decisiones técnicas](#decisiones-técnicas)
 - [Roadmap](#roadmap)
 
@@ -220,6 +221,7 @@ La aplicación lee la conexión de la variable de entorno `MONGODB_URI`. Si no e
 |---|---|---|
 | `MONGODB_URI` | `mongodb://localhost:27017/liverpool_orders` | Cadena de conexión a MongoDB |
 | `PORT` | `8080` | Puerto HTTP del backend |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Orígenes permitidos para el frontend (separados por coma) |
 
 **Opción A — MongoDB Atlas**
 
@@ -261,6 +263,82 @@ curl http://localhost:8080/actuator/health
 
 ---
 
+## API
+
+Documentación interactiva completa en **Swagger UI** (`/swagger-ui.html`). Base path: `/api`.
+
+### Usuarios
+
+| Método | Ruta | Descripción | Éxito |
+|---|---|---|---|
+| `POST` | `/api/users` | Crear usuario | `201` + `Location` |
+| `GET` | `/api/users?page=0&size=20` | Listar usuarios (paginado) | `200` |
+| `GET` | `/api/users/{id}` | Obtener usuario | `200` |
+| `PUT` | `/api/users/{id}` | Actualizar usuario | `200` |
+| `DELETE` | `/api/users/{id}` | Eliminar usuario (sin pedidos) | `204` |
+
+### Pedidos
+
+| Método | Ruta | Descripción | Éxito |
+|---|---|---|---|
+| `POST` | `/api/orders` | Crear pedido | `201` + `Location` |
+| `GET` | `/api/orders?q=&status=&page=0&size=20` | Buscar / listar pedidos (paginado) | `200` |
+| `GET` | `/api/orders/suggestions?q=&limit=8` | Sugerencias para el typeahead | `200` |
+| `GET` | `/api/orders/{id}` | Detalle del pedido | `200` |
+| `PUT` | `/api/orders/{id}` | Actualizar cliente, dirección e items (solo `CREATED`) | `200` |
+| `PATCH` | `/api/orders/{id}/status` | Cambiar estatus | `200` |
+| `DELETE` | `/api/orders/{id}` | Eliminar pedido | `204` |
+
+### Ejemplo: crear un pedido
+
+```bash
+curl -X POST http://localhost:8080/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "<id-del-usuario>",
+    "shippingAddress": {
+      "street": "Av. Insurgentes Sur 1234",
+      "neighborhood": "Del Valle",
+      "city": "Ciudad de Mexico",
+      "state": "CDMX",
+      "zipCode": "03100"
+    },
+    "items": [
+      { "productCode": "1098765432", "quantity": 2, "price": 1299.00 },
+      { "productCode": "1012345678", "quantity": 1, "price": 349.50 }
+    ]
+  }'
+```
+
+### Formato de errores
+
+Todas las respuestas de error siguen **RFC 9457 (Problem Details)**:
+
+```json
+{
+  "type": "about:blank",
+  "title": "Datos inválidos",
+  "status": 400,
+  "detail": "La solicitud contiene errores de validación",
+  "instance": "/api/orders",
+  "timestamp": "2026-10-19T22:10:00Z",
+  "errors": {
+    "items": "El pedido debe tener al menos un producto",
+    "shippingAddress.zipCode": "El código postal debe tener 5 dígitos"
+  }
+}
+```
+
+| Código | Cuándo |
+|---|---|
+| `400` | Validación de entrada, JSON mal formado, parámetro inválido |
+| `404` | Recurso inexistente |
+| `409` | Email duplicado, usuario con pedidos |
+| `422` | Regla de negocio violada (transición de estatus inválida, edición fuera de `CREATED`, usuario inexistente) |
+| `500` | Error inesperado (se registra en log; no se exponen detalles internos) |
+
+---
+
 ## Decisiones técnicas
 
 | Decisión | Motivo |
@@ -280,6 +358,12 @@ curl http://localhost:8080/actuator/health
 | **Total persistido además de calculado** | El dominio lo calcula; se guarda para ordenar o reportar sin recalcular en cada consulta. |
 | **Búsqueda con regex sobre campos acotados** | Suficiente para el volumen del ejercicio. En producción la evolución natural es Atlas Search con índice `autocomplete`. |
 | **Estatus como `String` en el documento** | El documento no depende del enum de dominio; la conversión ocurre en el mapper. |
+| **DTOs de entrada/salida separados del dominio** | El contrato HTTP es independiente del modelo interno; la validación de formato vive en el borde (Bean Validation) y la de negocio en el dominio. |
+| **Problem Details (RFC 9457)** | Formato de error estándar y homogéneo, soportado nativamente por Spring. |
+| **`PATCH /status` separado de `PUT`** | El cambio de estatus es una operación con reglas propias (máquina de estados), distinta de editar el contenido del pedido. |
+| **Endpoint de sugerencias dedicado** | El typeahead necesita una respuesta ligera y limitada; la lista completa usa el endpoint paginado. |
+| **`201 Created` + header `Location`** | Semántica REST estándar al crear recursos. |
+| **CORS por variable de entorno** | El origen del frontend cambia entre local y producción sin recompilar. |
 
 ---
 
@@ -289,7 +373,7 @@ curl http://localhost:8080/actuator/health
 - [x] Modelo de dominio y máquina de estados del pedido
 - [x] Puertos y casos de uso
 - [x] Adaptadores de persistencia MongoDB e índices
-- [ ] API REST, manejo de errores y documentación OpenAPI
+- [x] API REST, manejo de errores y documentación OpenAPI
 - [ ] Datos de prueba (seed) y pruebas unitarias
 - [ ] Frontend: lista de pedidos con typeahead y detalle
 - [ ] Diseño responsive
