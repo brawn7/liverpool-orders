@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: orders-api
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://localhost:27017/liverpool_orders}
+  data:
+    mongodb:
+      auto-index-creation: true
+server:
+  port: ${PORT:8080}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
