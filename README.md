@@ -16,7 +16,9 @@ Sistema para que el equipo de ventas gestione los pedidos realizados desde la **
 - [Requisitos previos](#requisitos-previos)
 - [Configuración](#configuración)
 - [Ejecución local](#ejecución-local)
+- [Datos de prueba](#datos-de-prueba)
 - [API](#api)
+- [Pruebas](#pruebas)
 - [Decisiones técnicas](#decisiones-técnicas)
 - [Roadmap](#roadmap)
 
@@ -148,7 +150,7 @@ Cada pedido embebe una copia de los datos del cliente (`userId`, nombre completo
 
 ### Índices
 
-Se crean automáticamente al iniciar la aplicación (`spring.data.mongodb.auto-index-creation`).
+Se declaran con anotaciones en los documentos (`@Indexed`, `@CompoundIndex`) y se crean de forma explícita e idempotente al arrancar la aplicación (`MongoIndexInitializer`).
 
 | Colección | Campo(s) | Tipo | Propósito |
 |---|---|---|---|
@@ -222,6 +224,7 @@ La aplicación lee la conexión de la variable de entorno `MONGODB_URI`. Si no e
 | `MONGODB_URI` | `mongodb://localhost:27017/liverpool_orders` | Cadena de conexión a MongoDB |
 | `PORT` | `8080` | Puerto HTTP del backend |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Orígenes permitidos para el frontend (separados por coma) |
+| `SEED_ENABLED` | `true` | Carga datos de prueba al arrancar si la base está vacía |
 
 **Opción A — MongoDB Atlas**
 
@@ -260,6 +263,23 @@ curl http://localhost:8080/actuator/health
 | Health check | http://localhost:8080/actuator/health |
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 | OpenAPI JSON | http://localhost:8080/v3/api-docs |
+
+---
+
+## Datos de prueba
+
+Al arrancar, si la colección `users` está vacía, la aplicación carga automáticamente:
+
+- **8 usuarios** con nombre, apellidos, email y dirección de envío.
+- **30 pedidos** con 1 a 3 productos cada uno, distribuidos en todos los estatus (`CREATED`, `PAID`, `SHIPPED`, `DELIVERED`, `CANCELLED`).
+
+Los datos se generan **a través de los casos de uso**, no con inserciones directas: cada usuario y pedido pasa por las mismas validaciones y transiciones de estatus que una petición real. La generación usa una semilla fija, así que el resultado es reproducible.
+
+```
+Seed completado: 8 usuarios, 30 pedidos
+```
+
+Para recargar los datos desde cero, elimina la base `liverpool_orders` (en Atlas: *Data Explorer → Drop database*; en Docker: `docker compose down -v`) y reinicia la aplicación. Para desactivar la carga: `SEED_ENABLED=false`.
 
 ---
 
@@ -339,6 +359,26 @@ Todas las respuestas de error siguen **RFC 9457 (Problem Details)**:
 
 ---
 
+## Pruebas
+
+```bash
+cd backend
+./mvnw test
+```
+
+Pruebas unitarias del núcleo, sin levantar Spring ni requerir base de datos:
+
+| Suite | Qué valida |
+|---|---|
+| `OrderStatusTest` | Todas las transiciones de la máquina de estados (permitidas y prohibidas) |
+| `OrderTest` | Estatus inicial, cálculo del total, pedido sin productos, edición bloqueada después del pago, validación de items |
+| `UserServiceTest` | Email duplicado (con normalización), actualización conservando el propio email, bloqueo de borrado con pedidos, 404 |
+| `OrderServiceTest` | Snapshot del cliente y formato del folio al crear, usuario inexistente, persistencia de cambios de estatus |
+
+Los servicios se prueban con mocks de los puertos de salida; esto es posible porque la capa de aplicación no depende de Spring ni de MongoDB.
+
+---
+
 ## Decisiones técnicas
 
 | Decisión | Motivo |
@@ -353,6 +393,7 @@ Todas las respuestas de error siguen **RFC 9457 (Problem Details)**:
 | **Folio legible `LV-yyMMdd-XXXXXX`** | Fácil de dictar y buscar; excluye caracteres ambiguos (0/O, 1/I). |
 | **Usuario inexistente al crear pedido → 422** | El recurso solicitado es el pedido; el usuario inválido es un error de datos de entrada, no un 404. |
 | **Configuración por variables de entorno** | El mismo artefacto corre en local y en la nube sin cambios de código. |
+| **Creación explícita de índices al arrancar** | Spring Data desaconseja `auto-index-creation` (deshabilitado por defecto); crearlos de forma explícita hace el comportamiento predecible y visible en el log. |
 | **Documentos de persistencia separados del dominio** | El esquema de MongoDB puede evolucionar sin contaminar el modelo de negocio; los mappers hacen la traducción. |
 | **Precios y total como `Decimal128`** | Spring Data guarda `BigDecimal` como texto por defecto; `Decimal128` conserva precisión y permite ordenar y agregar numéricamente. |
 | **Total persistido además de calculado** | El dominio lo calcula; se guarda para ordenar o reportar sin recalcular en cada consulta. |
@@ -364,6 +405,9 @@ Todas las respuestas de error siguen **RFC 9457 (Problem Details)**:
 | **Endpoint de sugerencias dedicado** | El typeahead necesita una respuesta ligera y limitada; la lista completa usa el endpoint paginado. |
 | **`201 Created` + header `Location`** | Semántica REST estándar al crear recursos. |
 | **CORS por variable de entorno** | El origen del frontend cambia entre local y producción sin recompilar. |
+| **Seed vía casos de uso** | Los datos de prueba respetan las mismas reglas que la API; si una regla cambia, el seed lo detecta. |
+| **Seed idempotente con semilla fija** | Solo corre con la base vacía y siempre genera los mismos datos, útil para demos reproducibles. |
+| **Pruebas unitarias sin base de datos** | Rápidas y deterministas. La evolución natural son pruebas de integración con Testcontainers (requiere Docker). |
 
 ---
 
@@ -374,7 +418,7 @@ Todas las respuestas de error siguen **RFC 9457 (Problem Details)**:
 - [x] Puertos y casos de uso
 - [x] Adaptadores de persistencia MongoDB e índices
 - [x] API REST, manejo de errores y documentación OpenAPI
-- [ ] Datos de prueba (seed) y pruebas unitarias
+- [x] Datos de prueba (seed) y pruebas unitarias
 - [ ] Frontend: lista de pedidos con typeahead y detalle
 - [ ] Diseño responsive
 - [ ] Despliegue en la nube
