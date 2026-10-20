@@ -7,6 +7,7 @@ export function AppLayout() {
       <header className={styles.header}>
         <div className={styles.headerInner}>
           <Link to="/" className={styles.brand}>
+            <img src="/liverpool-logo.png" alt="Liverpool" className={styles.logo} />
             <span className={styles.brandMark} aria-hidden="true" />
             <span>
               <span className={styles.brandTitle}>Gestión de pedidos</span>

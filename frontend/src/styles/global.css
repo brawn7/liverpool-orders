@@ -1,6 +1,6 @@
 :root {
   /* Marca */
-  --color-brand: #e10098;
+  --color-brand: #e3009a;
   --color-brand-strong: #b4007a;
   --color-brand-soft: #fde7f4;
 
@@ -11,7 +11,7 @@
   --color-border: #e5e5ea;
   --color-text: #1c1c22;
   --color-muted: #6b6b78;
-  --color-focus: #e10098;
+  --color-focus: #e3009a;
 
   /* Estados */
   --color-danger: #c62828;
