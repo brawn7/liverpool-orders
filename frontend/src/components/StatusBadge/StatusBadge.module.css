@@ -1,0 +1,52 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--badge-fg);
+  background: var(--badge-bg);
+}
+
+.sm {
+  font-size: 12px;
+  padding: 2px 10px;
+}
+
+.md {
+  font-size: 13px;
+  padding: 4px 12px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.CREATED {
+  --badge-fg: var(--status-created);
+  --badge-bg: var(--status-created-bg);
+}
+
+.PAID {
+  --badge-fg: var(--status-paid);
+  --badge-bg: var(--status-paid-bg);
+}
+
+.SHIPPED {
+  --badge-fg: var(--status-shipped);
+  --badge-bg: var(--status-shipped-bg);
+}
+
+.DELIVERED {
+  --badge-fg: var(--status-delivered);
+  --badge-bg: var(--status-delivered-bg);
+}
+
+.CANCELLED {
+  --badge-fg: var(--status-cancelled);
+  --badge-bg: var(--status-cancelled-bg);
+}

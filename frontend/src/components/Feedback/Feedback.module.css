@@ -1,0 +1,80 @@
+.box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+  fill: none;
+  stroke: var(--color-muted);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  margin-bottom: 4px;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.description {
+  max-width: 420px;
+  color: var(--color-muted);
+}
+
+.error {
+  border-style: solid;
+  border-color: var(--color-danger-soft);
+  background: var(--color-danger-soft);
+}
+
+.error .title {
+  color: var(--color-danger);
+}
+
+.button {
+  margin-top: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--color-brand);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-brand-strong);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--color-brand-soft);
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeletonRow {
+  height: 58px;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, #ececf0 25%, #f6f6f9 50%, #ececf0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}

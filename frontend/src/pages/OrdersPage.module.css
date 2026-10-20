@@ -1,0 +1,86 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activeFilter {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand-soft);
+  color: var(--color-brand-strong);
+  font-size: 13px;
+}
+
+.removeFilter {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.removeFilter:hover {
+  background: rgb(225 0 152 / 0.12);
+}
+
+.folio {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-brand-strong);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.folio:hover {
+  text-decoration: underline;
+}
+
+.customer {
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.muted {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.refreshing {
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}

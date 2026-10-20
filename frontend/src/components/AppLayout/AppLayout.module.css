@@ -1,0 +1,53 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: var(--color-brand);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.headerInner {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 14px var(--gutter);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.brandMark {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: #fff url('/favicon.svg') center / 100% no-repeat;
+  flex-shrink: 0;
+}
+
+.brandTitle {
+  display: block;
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.brandSubtitle {
+  display: block;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 24px var(--gutter) 48px;
+}
