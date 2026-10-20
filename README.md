@@ -6,6 +6,12 @@ Sistema para que el equipo de ventas gestione los pedidos realizados desde la **
 
 ### Demo en línea
 
+| | URL |
+|---|---|
+| Aplicación web | https://liverpool-orders.vercel.app |
+| API (Swagger UI) | https://liverpool-orders-api.onrender.com/swagger-ui.html |
+
+> La API corre en el plan gratuito de Render: se apaga tras 15 min sin tráfico y la primera petición puede tardar 1–2 minutos mientras despierta. La interfaz lo indica en pantalla.
 ---
 
 ## Tabla de contenido
