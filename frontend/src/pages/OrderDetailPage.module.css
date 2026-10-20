@@ -63,8 +63,9 @@
 
 .primaryButton,
 .secondaryButton {
-  height: 40px;
-  padding: 0 18px;
+  min-height: 40px;
+  padding: 8px 18px;
+  line-height: 1.25;
   border-radius: var(--radius-sm);
   font-weight: 600;
   cursor: pointer;
