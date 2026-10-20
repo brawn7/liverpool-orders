@@ -1,0 +1,122 @@
+:root {
+  /* Marca */
+  --color-brand: #e10098;
+  --color-brand-strong: #b4007a;
+  --color-brand-soft: #fde7f4;
+
+  /* Neutros */
+  --color-bg: #f5f5f7;
+  --color-surface: #ffffff;
+  --color-surface-muted: #fafafb;
+  --color-border: #e5e5ea;
+  --color-text: #1c1c22;
+  --color-muted: #6b6b78;
+  --color-focus: #e10098;
+
+  /* Estados */
+  --color-danger: #c62828;
+  --color-danger-soft: #fdecec;
+
+  /* Estatus de pedido: [texto, fondo] */
+  --status-created: #475569;
+  --status-created-bg: #eef1f5;
+  --status-paid: #1d4ed8;
+  --status-paid-bg: #e8effd;
+  --status-shipped: #9a5b00;
+  --status-shipped-bg: #fdf3e2;
+  --status-delivered: #15803d;
+  --status-delivered-bg: #e7f6ec;
+  --status-cancelled: #b91c1c;
+  --status-cancelled-bg: #fdecec;
+
+  /* Escala */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgb(16 16 24 / 0.06);
+  --shadow-md: 0 8px 24px rgb(16 16 24 / 0.12);
+  --gutter: 16px;
+  --content-width: 1200px;
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+mark {
+  background: var(--color-brand-soft);
+  color: var(--color-brand-strong);
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
