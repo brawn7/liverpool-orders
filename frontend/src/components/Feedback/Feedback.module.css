@@ -62,6 +62,15 @@
   gap: 10px;
 }
 
+.slowNotice {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-brand-soft);
+  color: var(--color-brand-strong);
+  font-size: 14px;
+  text-align: center;
+}
+
 .skeletonRow {
   height: 58px;
   border-radius: var(--radius);

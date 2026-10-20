@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import styles from './Feedback.module.css';
 
 interface EmptyStateProps {
@@ -40,9 +40,23 @@ export function ErrorState({ message, onRetry }: ErrorStateProps) {
   );
 }
 
+const SLOW_NOTICE_DELAY_MS = 4000;
+
 export function LoadingRows({ rows = 6 }: { rows?: number }) {
+  const [slow, setSlow] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSlow(true), SLOW_NOTICE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className={styles.skeleton} aria-busy="true" aria-label="Cargando">
+      {slow && (
+        <p className={styles.slowNotice} role="status">
+          El servidor se está activando, la primera carga puede tardar hasta un par de minutos…
+        </p>
+      )}
       {Array.from({ length: rows }, (_, index) => (
         <div key={index} className={styles.skeletonRow} />
       ))}

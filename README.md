@@ -4,6 +4,8 @@ Sistema para que el equipo de ventas gestione los pedidos realizados desde la **
 
 > **Estado:** en desarrollo — ver [Roadmap](#roadmap).
 
+### Demo en línea
+
 ---
 
 ## Tabla de contenido
@@ -17,8 +19,10 @@ Sistema para que el equipo de ventas gestione los pedidos realizados desde la **
 - [Configuración](#configuración)
 - [Ejecución local](#ejecución-local)
 - [Datos de prueba](#datos-de-prueba)
+- [Frontend](#frontend)
 - [API](#api)
 - [Pruebas](#pruebas)
+- [Despliegue](#despliegue)
 - [Decisiones técnicas](#decisiones-técnicas)
 - [Roadmap](#roadmap)
 
@@ -33,7 +37,7 @@ Sistema para que el equipo de ventas gestione los pedidos realizados desde la **
 | Documentación API | springdoc-openapi (OpenAPI 3 + Swagger UI) |
 | Observabilidad | Spring Boot Actuator (`/actuator/health`) |
 | Build | Maven Wrapper |
-| Frontend | React + Vite + TypeScript *(en desarrollo)* |
+| Frontend | React 19, TypeScript, Vite, React Router, CSS Modules |
 
 ---
 
@@ -96,8 +100,17 @@ liverpool-orders/
 │           │   ├── in/web/     # Controllers, DTOs, mappers
 │           │   └── out/persistence/  # Adaptadores, documentos, mappers y repositorios MongoDB
 │           └── config/         # Wiring de beans, OpenAPI
-├── frontend/                   # React + Vite (en desarrollo)
+├── frontend/
+│   └── src/
+│       ├── api/                # Cliente HTTP y endpoints
+│       ├── components/         # Componentes reutilizables (Typeahead, DataTable, StatusBadge…)
+│       ├── hooks/              # useAsync, useDebounce, useOrders
+│       ├── pages/              # OrdersPage, OrderDetailPage
+│       ├── styles/             # Tokens de diseño y estilos globales
+│       ├── types/              # Contratos de la API
+│       └── utils/              # Formatos y reglas de estatus
 ├── docker-compose.yml          # MongoDB local
+├── render.yaml                 # Infraestructura como código del backend (Render Blueprint)
 └── README.md
 ```
 
@@ -258,8 +271,20 @@ curl http://localhost:8080/actuator/health
 # {"groups":["liveness","readiness"],"status":"UP"}
 ```
 
+### Aplicación web
+
+En otra terminal:
+
+```bash
+cd liverpool-orders/frontend
+cp .env.example .env            # VITE_API_URL=http://localhost:8080
+npm install
+npm run dev                     # http://localhost:5173
+```
+
 | Recurso | URL |
 |---|---|
+| Aplicación web | http://localhost:5173 |
 | Health check | http://localhost:8080/actuator/health |
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 | OpenAPI JSON | http://localhost:8080/v3/api-docs |
@@ -280,6 +305,46 @@ Seed completado: 8 usuarios, 30 pedidos
 ```
 
 Para recargar los datos desde cero, elimina la base `liverpool_orders` (en Atlas: *Data Explorer → Drop database*; en Docker: `docker compose down -v`) y reinicia la aplicación. Para desactivar la carga: `SEED_ENABLED=false`.
+
+---
+
+## Frontend
+
+Dos pantallas, con los filtros reflejados en la URL (`/?q=maria&status=PAID&page=1`) para que se puedan compartir y el botón *atrás* los conserve.
+
+### Lista de pedidos (`/`)
+
+- **Búsqueda con typeahead:** mientras se escribe (a partir de 2 caracteres, con *debounce* de 300 ms) se muestran sugerencias con folio, cliente, email, estatus y total, resaltando la coincidencia.
+  - Seleccionar una sugerencia filtra la lista por ese pedido; `Enter` sin seleccionar filtra por el texto escrito.
+  - Si no hay coincidencias se muestra *"No se encontraron pedidos que coincidan con «…»"*.
+  - Navegación con teclado (`↑` `↓` `Enter` `Esc`) y roles ARIA de *combobox*.
+  - Cada petición nueva cancela la anterior (`AbortController`), así una respuesta lenta nunca sobrescribe una más reciente.
+- **Filtro por estatus** con chips.
+- **Paginación** del lado del servidor.
+- Estados de carga (*skeleton*), vacío y error con reintento.
+
+### Detalle del pedido (`/orders/:id`)
+
+- Datos del cliente, dirección de envío, resumen y productos con subtotales y total.
+- Línea de tiempo del estatus.
+- Acciones para avanzar el estatus según la máquina de estados (*Marcar como pagado*, *Enviar*, *Entregar*, *Cancelar*). El servidor valida la transición y cualquier error se muestra en pantalla.
+
+### Reutilización de componentes
+
+| Pieza | Tipo | Dónde se usa |
+|---|---|---|
+| `Typeahead<T>` | Componente genérico | Agnóstico del dominio; `OrderSearch` lo especializa para pedidos |
+| `DataTable<T>` | Componente genérico | Lista de pedidos y productos del detalle |
+| `StatusBadge` | Componente | Tabla, sugerencias y detalle |
+| `Card`, `EmptyState`, `ErrorState`, `LoadingRows`, `Pagination`, `StatusFilter`, `Highlight` | Componentes | Ambas pantallas |
+| `useAsync` | Hook | Base de todas las peticiones: estado, cancelación y recarga |
+| `useDebounce` | Hook | Typeahead |
+| `useOrderSearch`, `useOrder`, `useOrderSuggestions` | Hooks | Encapsulan el acceso a datos de cada pantalla |
+| `api/client.ts` | Módulo | Único punto HTTP; traduce errores RFC 9457 a `ApiError` |
+
+### Responsive
+
+Diseño *mobile-first* probado en 390 px y 1280 px. Debajo de 720 px las tablas se convierten en tarjetas (cada celda muestra su encabezado), las tarjetas del detalle pasan a una columna y los filtros se desplazan horizontalmente.
 
 ---
 
@@ -379,6 +444,41 @@ Los servicios se prueban con mocks de los puertos de salida; esto es posible por
 
 ---
 
+## Despliegue
+
+```mermaid
+flowchart LR
+    U[Navegador] -->|HTTPS| V[Vercel<br/>React SPA]
+    V -->|fetch + CORS| R[Render<br/>Spring Boot · Docker]
+    R -->|mongodb+srv| A[(MongoDB Atlas<br/>M0 · AWS us-east-1)]
+```
+
+| Componente | Plataforma | Configuración |
+|---|---|---|
+| Frontend | Vercel | Directorio raíz `frontend/`; `vercel.json` reescribe las rutas a `index.html` para que los links directos (`/orders/:id`) funcionen |
+| Backend | Render (Docker) | Definido en `render.yaml`; imagen multi-stage en `backend/Dockerfile`; health check en `/actuator/health` |
+| Base de datos | MongoDB Atlas | Cluster M0 en `us-east-1`, la misma región que el backend |
+
+### Variables de entorno
+
+| Plataforma | Variable | Valor |
+|---|---|---|
+| Render | `MONGODB_URI` | Cadena de conexión de Atlas |
+| Render | `CORS_ALLOWED_ORIGINS` | URL del frontend en Vercel (sin `/` final) |
+| Render | `SEED_ENABLED` | `true` (solo carga datos si la base está vacía) |
+| Vercel | `VITE_API_URL` | URL del backend en Render (sin `/` final) |
+
+`VITE_API_URL` se incrusta en tiempo de build: si cambia, hay que volver a desplegar el frontend.
+
+### Imagen Docker
+
+- **Multi-stage:** compila con el JDK y ejecuta solo con el JRE, así la imagen final no incluye Maven ni el código fuente.
+- **Capa de dependencias cacheada:** se copian `pom.xml` y el wrapper antes que el código, así un cambio en `src/` no vuelve a descargar dependencias.
+- **Usuario sin privilegios** (`uid 1001`).
+- **JVM ajustada a 512 MB y 0.1 CPU:** heap proporcional al contenedor, GC serial y compilación JIT de un nivel para arrancar más rápido.
+
+---
+
 ## Decisiones técnicas
 
 | Decisión | Motivo |
@@ -407,6 +507,14 @@ Los servicios se prueban con mocks de los puertos de salida; esto es posible por
 | **CORS por variable de entorno** | El origen del frontend cambia entre local y producción sin recompilar. |
 | **Seed vía casos de uso** | Los datos de prueba respetan las mismas reglas que la API; si una regla cambia, el seed lo detecta. |
 | **Seed idempotente con semilla fija** | Solo corre con la base vacía y siempre genera los mismos datos, útil para demos reproducibles. |
+| **React + Vite sin framework de UI** | Dos pantallas no justifican Next.js; CSS Modules con tokens mantiene el bundle chico y el estilo bajo control. |
+| **Filtros en la URL** | Estado compartible, recargable y compatible con el historial del navegador. |
+| **Componentes genéricos (`Typeahead<T>`, `DataTable<T>`)** | La lógica de interacción se escribe una vez y se especializa por dominio. |
+| **Cancelación de peticiones** | Evita condiciones de carrera en el typeahead y al cambiar filtros rápido. |
+| **Reglas de estatus duplicadas en el front solo para la UI** | Deciden qué botones mostrar; la validación real sigue en el backend. |
+| **Render + Vercel + Atlas en planes gratuitos** | Demo pública sin costo; backend y base en la misma región de AWS para minimizar latencia. |
+| **`render.yaml` (Blueprint)** | La infraestructura del backend queda versionada y reproducible en lugar de configurada a mano. |
+| **Aviso de arranque en frío en la UI** | El plan gratuito apaga la API por inactividad; el usuario sabe que debe esperar en vez de pensar que la app falló. |
 | **Pruebas unitarias sin base de datos** | Rápidas y deterministas. La evolución natural son pruebas de integración con Testcontainers (requiere Docker). |
 
 ---
@@ -419,7 +527,7 @@ Los servicios se prueban con mocks de los puertos de salida; esto es posible por
 - [x] Adaptadores de persistencia MongoDB e índices
 - [x] API REST, manejo de errores y documentación OpenAPI
 - [x] Datos de prueba (seed) y pruebas unitarias
-- [ ] Frontend: lista de pedidos con typeahead y detalle
-- [ ] Diseño responsive
+- [x] Frontend: lista de pedidos con typeahead y detalle
+- [x] Diseño responsive
 - [ ] Despliegue en la nube
 - [ ] Video y capturas de la demo
