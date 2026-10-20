@@ -2,7 +2,7 @@
 
 Sistema para que el equipo de ventas gestione los pedidos realizados desde la **aplicación móvil** y el **sitio web**. Expone una API REST para el CRUD de pedidos y usuarios, y una interfaz web para consultar, filtrar y ver el detalle de cada pedido.
 
-> **Estado:** en desarrollo — ver [Roadmap](#roadmap).
+> **Estado:** desplegado y funcional — ver [Roadmap](#roadmap).
 
 ### Demo en línea
 
@@ -12,6 +12,7 @@ Sistema para que el equipo de ventas gestione los pedidos realizados desde la **
 | API (Swagger UI) | https://liverpool-orders-api.onrender.com/swagger-ui.html |
 
 > La API corre en el plan gratuito de Render: se apaga tras 15 min sin tráfico y la primera petición puede tardar 1–2 minutos mientras despierta. La interfaz lo indica en pantalla.
+
 ---
 
 ## Tabla de contenido
@@ -29,6 +30,7 @@ Sistema para que el equipo de ventas gestione los pedidos realizados desde la **
 - [API](#api)
 - [Pruebas](#pruebas)
 - [Despliegue](#despliegue)
+- [Capturas](#capturas)
 - [Decisiones técnicas](#decisiones-técnicas)
 - [Roadmap](#roadmap)
 
@@ -92,6 +94,7 @@ Los servicios de aplicación **no llevan anotaciones de Spring**; se registran c
 ```
 liverpool-orders/
 ├── backend/
+│   ├── Dockerfile              # Imagen multi-stage para producción
 │   └── src/main/java/com/liverpool/orders/
 │       ├── domain/
 │       │   ├── model/          # User, Order, OrderItem, Address, Customer, OrderStatus
@@ -105,8 +108,10 @@ liverpool-orders/
 │           ├── adapter/
 │           │   ├── in/web/     # Controllers, DTOs, mappers
 │           │   └── out/persistence/  # Adaptadores, documentos, mappers y repositorios MongoDB
-│           └── config/         # Wiring de beans, OpenAPI
+│           ├── config/         # Wiring de beans, OpenAPI, CORS, índices
+│           └── seed/           # Carga de datos de prueba
 ├── frontend/
+│   ├── vercel.json             # Rewrites para la SPA
 │   └── src/
 │       ├── api/                # Cliente HTTP y endpoints
 │       ├── components/         # Componentes reutilizables (Typeahead, DataTable, StatusBadge…)
@@ -115,6 +120,7 @@ liverpool-orders/
 │       ├── styles/             # Tokens de diseño y estilos globales
 │       ├── types/              # Contratos de la API
 │       └── utils/              # Formatos y reglas de estatus
+├── docs/screenshots/           # Capturas de la aplicación
 ├── docker-compose.yml          # MongoDB local
 ├── render.yaml                 # Infraestructura como código del backend (Render Blueprint)
 └── README.md
@@ -485,6 +491,26 @@ flowchart LR
 
 ---
 
+## Capturas
+
+| Lista de pedidos | Typeahead |
+|---|---|
+| ![Lista](docs/screenshots/01-lista.png) | ![Typeahead](docs/screenshots/02-typeahead.png) |
+
+| Sin resultados | Filtro por estatus |
+|---|---|
+| ![Sin resultados](docs/screenshots/03-sin-resultados.png) | ![Filtro](docs/screenshots/04-filtro-estatus.png) |
+
+| Detalle del pedido | Swagger UI |
+|---|---|
+| ![Detalle](docs/screenshots/05-detalle.png) | ![Swagger](docs/screenshots/08-swagger.png) |
+
+| Móvil: lista | Móvil: detalle |
+|---|---|
+| ![Móvil lista](docs/screenshots/06-movil-lista.png) | ![Móvil detalle](docs/screenshots/07-movil-detalle.png) |
+
+---
+
 ## Decisiones técnicas
 
 | Decisión | Motivo |
@@ -535,5 +561,6 @@ flowchart LR
 - [x] Datos de prueba (seed) y pruebas unitarias
 - [x] Frontend: lista de pedidos con typeahead y detalle
 - [x] Diseño responsive
-- [ ] Despliegue en la nube
-- [ ] Video y capturas de la demo
+- [x] Despliegue en la nube
+- [x] Capturas de pantalla
+- [ ] Video de la demo
