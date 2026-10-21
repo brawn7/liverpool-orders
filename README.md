@@ -2,7 +2,7 @@
 
 Sistema para que el equipo de ventas gestione los pedidos realizados desde la **aplicación móvil** y el **sitio web**. Expone una API REST para el CRUD de pedidos y usuarios, y una interfaz web para consultar, filtrar y ver el detalle de cada pedido.
 
-> **Estado:** desplegado y funcional — ver [Roadmap](#roadmap).
+> **Estado:** completo — ver [Roadmap](#roadmap).
 
 ### Demo en línea
 
@@ -10,6 +10,7 @@ Sistema para que el equipo de ventas gestione los pedidos realizados desde la **
 |---|---|
 | Aplicación web | https://liverpool-orders.vercel.app |
 | API (Swagger UI) | https://liverpool-orders-api.onrender.com/swagger-ui.html |
+| Video de la solución | https://youtu.be/YSVyMskqi8Y |
 
 > La API corre en el plan gratuito de Render: se apaga tras 15 min sin tráfico y la primera petición puede tardar 1–2 minutos mientras despierta. La interfaz lo indica en pantalla.
 
@@ -563,4 +564,4 @@ flowchart LR
 - [x] Diseño responsive
 - [x] Despliegue en la nube
 - [x] Capturas de pantalla
-- [ ] Video de la demo
+- [x] Video de la demo
